@@ -59,8 +59,10 @@ except KeyError:
 # Create output directories
 print("Creating output directories...", end="")
 for album in albums["Response"]["AlbumList"]:
-	if album["Name"].strip() not in specificAlbums:
-		continue
+	if args.albums:
+		if album["Name"].strip() not in specificAlbums:
+			continue
+
 	directory = output_dir + album["UrlPath"][1:]
 	if not os.path.exists(directory):
 		os.makedirs(directory)
@@ -68,7 +70,6 @@ print("done.")
 
 # Loop through each album
 for album in tqdm(albums["Response"]["AlbumList"]):
-	print(album)
 	if args.albums:
 		if album["Name"].strip() not in specificAlbums:
 			continue
