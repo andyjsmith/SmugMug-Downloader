@@ -41,8 +41,8 @@ if args.albums:
 def get_json(url):
 	r = requests.get(endpoint + url, cookies=cookies)
 	soup = BeautifulSoup(r.text, "html.parser")
-	for pre in soup.find_all("pre"):
-		return json.loads(pre.text)
+	pres = soup.find_all("pre")
+	return json.loads(pres[-1].text)
 
 
 # Retrieve the list of albums
