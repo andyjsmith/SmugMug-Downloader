@@ -92,8 +92,9 @@ for album in tqdm(albums["Response"]["AlbumList"]):
 			if os.path.isfile(image_path):
 				continue
 
-			image_req = get_json(image["Uris"]["LargestImage"]["Uri"])
-			download_url = image_req["Response"]["LargestImage"]["Url"]
+			largest_media = "LargestVideo" if "LargestVideo" in image["Uris"] else "LargestImage"
+			image_req = get_json(image["Uris"][largest_media]["Uri"])
+			download_url = image_req["Response"][largest_media]["Url"]
 
 			try:
 				urllib.request.urlretrieve(download_url, image_path)
