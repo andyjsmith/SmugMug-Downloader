@@ -1,12 +1,12 @@
 import os
 import sys
 import requests
-import urllib.request
 import json
 import re
 import argparse
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+from colored import fg, bg, attr
 
 parser = argparse.ArgumentParser(description="SmugMug Downloader")
 parser.add_argument(
@@ -68,11 +68,14 @@ for album in albums["Response"]["AlbumList"]:
 		os.makedirs(directory)
 print("done.")
 
-def format_label(s, width=16):
+def format_label(s, width=24):
     return s[:width].ljust(width)
 
+bar_format = '{l_bar}{bar:-2}| {n_fmt:>3}/{total_fmt:<3}'
+
 # Loop through each album
-for album in tqdm(albums["Response"]["AlbumList"], desc=format_label("All Albums")):
+for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_format=bar_format,
+		desc=f"{fg('yellow')}{attr('bold')}{format_label('All Albums')}{attr('reset')}"):
 	if args.albums:
 		if album["Name"].strip() not in specificAlbums:
 			continue
@@ -87,7 +90,8 @@ for album in tqdm(albums["Response"]["AlbumList"], desc=format_label("All Albums
 			break
 
 		# Loop through each image in the album
-		for image in tqdm(images["Response"]["AlbumImage"], desc=format_label(album["Name"])):
+		for image in tqdm(images["Response"]["AlbumImage"], position=1, leave=True, bar_format=bar_format,
+				desc=f"{attr('bold')}{format_label(album['Name'])}{attr('reset')}"):
 			image_path = album_path + "/" + \
 				re.sub('[^\w\-_\. ]', '_', image["FileName"])
 
@@ -95,9 +99,14 @@ for album in tqdm(albums["Response"]["AlbumList"], desc=format_label("All Albums
 			if os.path.isfile(image_path):
 				continue
 
+			# Grab video URI if the file is video, otherwise, the standard image URI
 			largest_media = "LargestVideo" if "LargestVideo" in image["Uris"] else "LargestImage"
-			image_req = get_json(image["Uris"][largest_media]["Uri"])
-			download_url = image_req["Response"][largest_media]["Url"]
+			if largest_media in image["Uris"]:
+				image_req = get_json(image["Uris"][largest_media]["Uri"])
+				download_url = image_req["Response"][largest_media]["Url"]
+			else:
+				# grab archive link if there's no LargestImage URI
+				download_url = image["ArchivedUri"]
 
 			try:
 				r = requests.get(download_url)
