@@ -68,8 +68,11 @@ for album in albums["Response"]["AlbumList"]:
 		os.makedirs(directory)
 print("done.")
 
+def format_label(s, width=16):
+    return s[:width].ljust(width)
+
 # Loop through each album
-for album in tqdm(albums["Response"]["AlbumList"]):
+for album in tqdm(albums["Response"]["AlbumList"], desc=format_label("All Albums")):
 	if args.albums:
 		if album["Name"].strip() not in specificAlbums:
 			continue
@@ -84,7 +87,7 @@ for album in tqdm(albums["Response"]["AlbumList"]):
 			break
 
 		# Loop through each image in the album
-		for image in tqdm(images["Response"]["AlbumImage"]):
+		for image in tqdm(images["Response"]["AlbumImage"], desc=format_label(album["Name"])):
 			image_path = album_path + "/" + \
 				re.sub('[^\w\-_\. ]', '_', image["FileName"])
 
@@ -97,7 +100,10 @@ for album in tqdm(albums["Response"]["AlbumList"]):
 			download_url = image_req["Response"][largest_media]["Url"]
 
 			try:
-				urllib.request.urlretrieve(download_url, image_path)
+				r = requests.get(download_url)
+				with open(image_path, 'wb') as f:
+					for chunk in r.iter_content(chunk_size=128):
+						f.write(chunk)
 			except UnicodeEncodeError as ex:
 				print("Unicode Error: " + str(ex))
 				continue
