@@ -83,11 +83,14 @@ for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_f
 	album_path = output_dir + album["UrlPath"][1:]
 	images = get_json(album["Uri"] + "!images")
 
-	# Loop through each page
-	while True:
-		# Skip if no images are in the album
-		if "AlbumImage" not in images["Response"]:
-			break
+	# Skip if no images are in the album
+	if "AlbumImage" in images["Response"]:
+
+		# Loop through each page of the album
+		next_images = images
+		while "NextPage" in next_images["Response"]["Pages"]:
+			next_images = get_json(next_images["Response"]["Pages"]["NextPage"])
+			images["Response"]["AlbumImage"].extend(next_images["Response"]["AlbumImage"])
 
 		# Loop through each image in the album
 		for image in tqdm(images["Response"]["AlbumImage"], position=1, leave=True, bar_format=bar_format,
@@ -118,11 +121,5 @@ for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_f
 				continue
 			except urllib.error.HTTPError as ex:
 				print("HTTP Error: " + str(ex))
-
-		# Loop through each page of the album
-		if "NextPage" in images["Response"]["Pages"]:
-			images = get_json(images["Response"]["Pages"]["NextPage"])
-		else:
-			break
 
 print("Completed.")
