@@ -10,13 +10,13 @@ from colored import fg, bg, attr
 
 parser = argparse.ArgumentParser(description="SmugMug Downloader")
 parser.add_argument(
-	"-s", "--session", help="session ID (required if user is password protected); log in on a web browser and paste the SMSESS cookie")
+		"-s", "--session", help="session ID (required if user is password protected); log in on a web browser and paste the SMSESS cookie")
 parser.add_argument(
-	"-u", "--user", help="username (from URL, USERNAME.smugmug.com)", required=True)
+		"-u", "--user", help="username (from URL, USERNAME.smugmug.com)", required=True)
 parser.add_argument("-o", "--output", default="output/",
-                    help="output directory")
+		help="output directory")
 parser.add_argument(
-	"--albums", help='specific album names to download, split by $. Defaults to all. (e.g. --albums "Title 1$Title 2$Title 3")')
+		"--albums", help='specific album names to download, split by $. Defaults to all. (e.g. --albums "Title 1$Title 2$Title 3")')
 
 args = parser.parse_args()
 
@@ -69,7 +69,7 @@ for album in albums["Response"]["AlbumList"]:
 print("done.")
 
 def format_label(s, width=24):
-    return s[:width].ljust(width)
+	return s[:width].ljust(width)
 
 bar_format = '{l_bar}{bar:-2}| {n_fmt:>3}/{total_fmt:<3}'
 
@@ -93,7 +93,7 @@ for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_f
 		for image in tqdm(images["Response"]["AlbumImage"], position=1, leave=True, bar_format=bar_format,
 				desc=f"{attr('bold')}{format_label(album['Name'])}{attr('reset')}"):
 			image_path = album_path + "/" + \
-				re.sub('[^\w\-_\. ]', '_', image["FileName"])
+					re.sub('[^\w\-_\. ]', '_', image["FileName"])
 
 			# Skip if image has already been saved
 			if os.path.isfile(image_path):
