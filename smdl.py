@@ -1,22 +1,22 @@
 import os
 import sys
 import requests
-import urllib.request
 import json
 import re
 import argparse
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+from colored import fg, bg, attr
 
 parser = argparse.ArgumentParser(description="SmugMug Downloader")
 parser.add_argument(
-	"-s", "--session", help="session ID (required if user is password protected); log in on a web browser and paste the SMSESS cookie")
+		"-s", "--session", help="session ID (required if user is password protected); log in on a web browser and paste the SMSESS cookie")
 parser.add_argument(
-	"-u", "--user", help="username (from URL, USERNAME.smugmug.com)", required=True)
+		"-u", "--user", help="username (from URL, USERNAME.smugmug.com)", required=True)
 parser.add_argument("-o", "--output", default="output/",
-                    help="output directory")
+		help="output directory")
 parser.add_argument(
-	"--albums", help='specific album names to download, split by $. Defaults to all. (e.g. --albums "Title 1$Title 2$Title 3")')
+		"--albums", help='specific album names to download, split by $. Defaults to all. (e.g. --albums "Title 1$Title 2$Title 3")')
 
 args = parser.parse_args()
 
@@ -68,8 +68,14 @@ for album in albums["Response"]["AlbumList"]:
 		os.makedirs(directory)
 print("done.")
 
+def format_label(s, width=24):
+	return s[:width].ljust(width)
+
+bar_format = '{l_bar}{bar:-2}| {n_fmt:>3}/{total_fmt:<3}'
+
 # Loop through each album
-for album in tqdm(albums["Response"]["AlbumList"]):
+for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_format=bar_format,
+		desc=f"{fg('yellow')}{attr('bold')}{format_label('All Albums')}{attr('reset')}"):
 	if args.albums:
 		if album["Name"].strip() not in specificAlbums:
 			continue
@@ -77,36 +83,43 @@ for album in tqdm(albums["Response"]["AlbumList"]):
 	album_path = output_dir + album["UrlPath"][1:]
 	images = get_json(album["Uri"] + "!images")
 
-	# Loop through each page
-	while True:
-		# Skip if no images are in the album
-		if "AlbumImage" not in images["Response"]:
-			break
+	# Skip if no images are in the album
+	if "AlbumImage" in images["Response"]:
+
+		# Loop through each page of the album
+		next_images = images
+		while "NextPage" in next_images["Response"]["Pages"]:
+			next_images = get_json(next_images["Response"]["Pages"]["NextPage"])
+			images["Response"]["AlbumImage"].extend(next_images["Response"]["AlbumImage"])
 
 		# Loop through each image in the album
-		for image in tqdm(images["Response"]["AlbumImage"]):
+		for image in tqdm(images["Response"]["AlbumImage"], position=1, leave=True, bar_format=bar_format,
+				desc=f"{attr('bold')}{format_label(album['Name'])}{attr('reset')}"):
 			image_path = album_path + "/" + \
-				re.sub('[^\w\-_\. ]', '_', image["FileName"])
+					re.sub('[^\w\-_\. ]', '_', image["FileName"])
 
 			# Skip if image has already been saved
 			if os.path.isfile(image_path):
 				continue
 
-			image_req = get_json(image["Uris"]["LargestImage"]["Uri"])
-			download_url = image_req["Response"]["LargestImage"]["Url"]
+			# Grab video URI if the file is video, otherwise, the standard image URI
+			largest_media = "LargestVideo" if "LargestVideo" in image["Uris"] else "LargestImage"
+			if largest_media in image["Uris"]:
+				image_req = get_json(image["Uris"][largest_media]["Uri"])
+				download_url = image_req["Response"][largest_media]["Url"]
+			else:
+				# grab archive link if there's no LargestImage URI
+				download_url = image["ArchivedUri"]
 
 			try:
-				urllib.request.urlretrieve(download_url, image_path)
+				r = requests.get(download_url)
+				with open(image_path, 'wb') as f:
+					for chunk in r.iter_content(chunk_size=128):
+						f.write(chunk)
 			except UnicodeEncodeError as ex:
 				print("Unicode Error: " + str(ex))
 				continue
 			except urllib.error.HTTPError as ex:
 				print("HTTP Error: " + str(ex))
-
-		# Loop through each page of the album
-		if "NextPage" in images["Response"]["Pages"]:
-			images = get_json(images["Response"]["Pages"]["NextPage"])
-		else:
-			break
 
 print("Completed.")
