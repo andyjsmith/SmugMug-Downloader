@@ -21,13 +21,14 @@ SmugMug Downloader
 optional arguments:
   -h, --help            show this help message and exit
   -s SESSION, --session SESSION
-                        session ID (required if user is password protected);
-                        log in on a web browser and paste the SMSESS cookie
+                        session ID (required if user is password protected); log
+                        in on a web browser and paste the SMSESS cookie
   -u USER, --user USER  username (from URL, USERNAME.smugmug.com)
   -o OUTPUT, --output OUTPUT
                         output directory
   --albums ALBUMS       specific album names to download, split by $. Defaults
-                        to all. (e.g. --albums "Title 1$Title 2$Title 3")
+                        to all. Wrap in single quotes to avoid shell variable
+                        substitutions. (e.g. --albums 'Title 1$Title 2$Title 3')
 ```
 
 

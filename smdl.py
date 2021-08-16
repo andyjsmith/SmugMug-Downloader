@@ -16,7 +16,7 @@ parser.add_argument(
 parser.add_argument("-o", "--output", default="output/",
 		help="output directory")
 parser.add_argument(
-		"--albums", help='specific album names to download, split by $. Defaults to all. (e.g. --albums "Title 1$Title 2$Title 3")')
+		"--albums", help="specific album names to download, split by $. Defaults to all. Wrap in single quotes to avoid shell variable substitutions. (e.g. --albums 'Title 1$Title 2$Title 3')")
 
 args = parser.parse_args()
 
