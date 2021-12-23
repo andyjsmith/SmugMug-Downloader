@@ -40,14 +40,19 @@ if args.albums:
 
 # Gets the JSON output from an API call
 def get_json(url):
-    for i in range(5):
+    num_retries = 5
+    for i in range(num_retries):
         try:
             r = requests.get(endpoint + url, cookies=cookies)
             soup = BeautifulSoup(r.text, "html.parser")
             pres = soup.find_all("pre")
             return json.loads(pres[-1].text)
-        except KeyError:
+        except IndexError:
             print("ERROR: JSON output not found for URL: %s" % url)
+            if i+1 < num_retries:
+                print("Retrying...")
+            else:
+                print("ERROR: Retries unsuccessful. Skipping this request.")
             continue
     return None
 
