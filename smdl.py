@@ -123,7 +123,7 @@ for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_f
         for image in tqdm(images["Response"]["AlbumImage"], position=1, leave=True, bar_format=bar_format,
                           desc=f"{attr('bold')}{format_label(album['Name'])}{attr('reset')}"):
             image_path = album_path + "/" + \
-                re.sub('[^\w\-_\. ]', '_', image["FileName"])
+                re.sub(r'[^\w\-_\. ]', '_', image["FileName"])
 
             # Skip if image has already been saved
             if os.path.isfile(image_path):
