@@ -130,7 +130,7 @@ for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_f
                 continue
 
             # Grab video URI if the file is video, otherwise, the standard image URI
-            largest_media = "LargestVideo" if "LargestVideo" in image["Uris"] else "LargestImage"
+            largest_media = "LargestVideo" if "LargestVideo" in image["Uris"] else "ImageDownload" if "ImageDownload" in image["Uris"] else "LargestImage"
             if largest_media in image["Uris"]:
                 image_req = get_json(image["Uris"][largest_media]["Uri"])
                 if image_req is None:
