@@ -143,7 +143,7 @@ for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_f
                 download_url = image["ArchivedUri"]
 
             try:
-                r = requests.get(download_url)
+                r = requests.get(download_url, cookies=cookies)
                 with open(image_path, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=128):
                         f.write(chunk)
