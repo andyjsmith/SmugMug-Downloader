@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Optional
 
 import requests
@@ -143,14 +144,29 @@ class SmugMugDownloader:
                         next_images["Response"]["AlbumImage"]
                     )
 
-                for image in tqdm(
-                    images["Response"]["AlbumImage"],
-                    position=1,
-                    leave=True,
-                    bar_format=bar_format,
-                    desc=f"{attr('bold')}{self.format_label(album['Name'])}{attr('reset')}",
-                ):
-                    self.download_image(image, album_path)
+                total_images = len(images["Response"]["AlbumImage"])
+                completed_images = 0
+
+                with ThreadPoolExecutor(max_workers=3) as executor:
+                    futures = []
+                    for image in images["Response"]["AlbumImage"]:
+                        futures.append(
+                            executor.submit(self.download_image, image, album_path)
+                        )
+
+                    album_progress = tqdm(
+                        total=total_images,
+                        position=1,
+                        leave=True,
+                        bar_format=bar_format,
+                        desc=f"{attr('bold')}{self.format_label(album['Name'])}{attr('reset')}",
+                    )
+
+                    for _ in as_completed(futures):
+                        completed_images += 1
+                        album_progress.update(1)
+
+                    album_progress.close()
 
         logging.info("Download completed.")
 
@@ -187,7 +203,6 @@ class SmugMugDownloader:
             with open(image_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=128):
                     f.write(chunk)
-            logging.info(f"Downloaded image: {image_path}")
         except UnicodeEncodeError as ex:
             logging.error(f"Unicode Error: {ex}")
             return
