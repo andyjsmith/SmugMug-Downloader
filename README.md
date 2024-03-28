@@ -12,7 +12,7 @@ Download all of the pictures from a SmugMug user, including password-protected u
 * If the user requires an unlock password, you must specify the password: `python smdl.py -u USERNAME -p PASSWORD`
 * For a full list of command-line options, run `python smdl.py -h`, or see below:
 ```
-usage: smdl.py [-h] [-s SESSION] -u USER [-o OUTPUT] [--albums ALBUMS]
+usage: smdl.py [-h] -u USERNAME [-p PASSWORD] [-o OUTPUT] [--albums ALBUMS] [--folder FOLDER]
 
 SmugMug Downloader
 
