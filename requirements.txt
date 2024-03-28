@@ -1,5 +1,6 @@
 beautifulsoup4
 requests
+retrying
 tqdm
 urllib3
 colored
