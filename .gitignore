@@ -1,1 +1,6 @@
 output
+
+# virtualenv
+venv/
+__pycache__/
+*.pyc
