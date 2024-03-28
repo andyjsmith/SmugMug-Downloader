@@ -25,6 +25,10 @@ parser.add_argument(
     "--albums",
     help="specific album names to download, split by $. Defaults to all. Wrap in single quotes to avoid shell variable substitutions. (e.g. --albums 'Title 1$Title 2$Title 3')",
 )
+parser.add_argument(
+    "--folder",
+    help="download all the albums under the specific folder",
+)
 
 args = parser.parse_args()
 
@@ -118,16 +122,20 @@ except KeyError:
     )
 
 # Create output directories
-print("Creating output directories...", end="")
+print("Creating output directories...")
+selected_albums = []
 for album in albums["Response"]["AlbumList"]:
-    if args.albums:
-        if album["Name"].strip() not in specificAlbums:
-            continue
+    # Filter out albums not in specificAlbums nor in the specific folder
+    if (args.albums and album["Name"].strip() in specificAlbums) or (
+        args.folder and args.folder in album["UrlPath"]
+    ):
+        print(f"- {album['UrlPath']}")
+        selected_albums.append(album)
 
-    directory = output_dir + album["UrlPath"][1:]
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-print("done.")
+        directory = output_dir + album["UrlPath"][1:]
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+print("Done.")
 
 
 def format_label(s, width=24):
@@ -138,16 +146,12 @@ bar_format = "{l_bar}{bar:-2}| {n_fmt:>3}/{total_fmt:<3}"
 
 # Loop through each album
 for album in tqdm(
-    albums["Response"]["AlbumList"],
+    selected_albums,
     position=0,
     leave=True,
     bar_format=bar_format,
     desc=f"{fg('yellow')}{attr('bold')}{format_label('All Albums')}{attr('reset')}",
 ):
-    if args.albums:
-        if album["Name"].strip() not in specificAlbums:
-            continue
-
     album_path = output_dir + album["UrlPath"][1:]
     images = get_json(session, album["Uri"] + "!images")
     if images is None:
