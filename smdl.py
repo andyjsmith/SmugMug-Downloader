@@ -47,7 +47,7 @@ def get_json(url):
             soup = BeautifulSoup(r.text, "html.parser")
             pres = soup.find_all("pre")
             return json.loads(pres[-1].text)
-        except IndexError:
+        except (IndexError, requests.exceptions.RequestException):
             print("ERROR: JSON output not found for URL: %s" % url)
             if i+1 < num_retries:
                 print("Retrying...")
@@ -147,9 +147,10 @@ for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_f
                 with open(image_path, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=128):
                         f.write(chunk)
+            except requests.exceptions.RequestException as ex:
+                print("Could not fetch: " + str(ex))
             except UnicodeEncodeError as ex:
                 print("Unicode Error: " + str(ex))
-                continue
             except urllib.error.HTTPError as ex:
                 print("HTTP Error: " + str(ex))
 
