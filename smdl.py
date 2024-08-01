@@ -24,13 +24,20 @@ logging.basicConfig(
 
 
 class SmugMugDownloader:
-    def __init__(self, username: str, password: Optional[str], output_dir: str):
+    def __init__(
+        self,
+        username: str,
+        password: Optional[str],
+        session_id: Optional[str],
+        output_dir: str,
+    ):
         self.username = username
         self.password = password
+        self.session_id = session_id
         self.output_dir = output_dir
         self.session = requests.Session()
 
-    def login(self):
+    def login_with_password(self):
         response = self.session.get(f"https://{self.username}.smugmug.com/")
 
         node_id_match = re.search(r'"rootNodeId":"(\w+)"', response.text)
@@ -212,9 +219,12 @@ class SmugMugDownloader:
             logging.error(f"Failed to download image {image_path}: {ex}")
 
     def run(self, selected_albums: Optional[List[str]], selected_folder: Optional[str]):
-        if self.password:
-            logging.info("Logging in...")
-            self.login()
+        if self.session_id:
+            logging.info("Logging in with session ID...")
+            self.session.cookies.set("SMSESS", self.session_id)
+        elif self.password:
+            logging.info("Logging in with password...")
+            self.login_with_password()
 
         logging.info("Preparing album list...")
         album_list = self.prepare_album_list(selected_albums, selected_folder)
@@ -234,7 +244,16 @@ def parse_args():
         help="username (from URL, USERNAME.smugmug.com)",
         required=True,
     )
-    parser.add_argument("-p", "--password", help="password for the user to login")
+    parser.add_argument(
+        "-p",
+        "--password",
+        help="password (required if user is password protected); if session ID is provided, password will be ignored",
+    )
+    parser.add_argument(
+        "-s",
+        "--session",
+        help="session ID (required if user is password protected); log in on a web browser and paste the SMSESS cookie",
+    )
     parser.add_argument("-o", "--output", default="output/", help="output directory")
     parser.add_argument(
         "--albums",
@@ -259,7 +278,9 @@ def main():
     else:
         selected_albums = None
 
-    downloader = SmugMugDownloader(args.username, args.password, output_dir)
+    downloader = SmugMugDownloader(
+        args.username, args.password, args.session, output_dir
+    )
     downloader.run(selected_albums, args.folder)
 
 
