@@ -72,7 +72,7 @@ class SmugMugDownloader:
             soup = BeautifulSoup(r.text, "html.parser")
             pres = soup.find_all("pre")
             return json.loads(pres[-1].text)
-        except (IndexError, requests.RequestException) as e:
+        except (IndexError, requests.exceptions.RequestException) as e:
             logging.error(f"Failed to get JSON data from URL: {url}. Error: {e}")
             raise
 
@@ -203,6 +203,8 @@ class SmugMugDownloader:
             with open(image_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=128):
                     f.write(chunk)
+        except requests.exceptions.RequestException as ex:
+            logging.error(f"Could not fetch: {ex}")
         except UnicodeEncodeError as ex:
             logging.error(f"Unicode Error: {ex}")
             return
