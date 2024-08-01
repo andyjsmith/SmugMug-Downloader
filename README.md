@@ -4,7 +4,8 @@ Download all of the pictures from a SmugMug user, including password-protected u
 ## Installation
 * Install Python 3
 * Clone this repository or download it as a zip
-* Install the requirements:  `make`
+* Install the requirements:  `pip install -r requirements.txt`
+* NOTE: If you are on Linux, you will probably need to type `pip3` and `python3` instead
 
 ## Usage
 * Run `python smdl.py -u USERNAME` and it will begin downloading your pictures into separate folders in the default output directory. The username is what is found in the URL, i.e. USERNAME.smugmug.com.
