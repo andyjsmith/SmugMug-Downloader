@@ -5,6 +5,7 @@ import json
 import re
 import argparse
 import urllib.error
+from datetime import datetime
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from colored import fg, bg, attr
@@ -84,6 +85,29 @@ for album in albums["Response"]["AlbumList"]:
 print("done.")
 
 
+# Best available capture time for an image/video, as a POSIX timestamp
+def media_timestamp(image):
+    for key in ("DateTimeOriginal", "DateTimeUploaded", "Date"):
+        value = image.get(key)
+        if not value:
+            continue
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            continue
+    return None
+
+
+# Stamp the file with the capture time so it sorts correctly on disk
+def set_file_time(path, timestamp):
+    if timestamp is None:
+        return
+    try:
+        os.utime(path, (timestamp, timestamp))
+    except OSError as ex:
+        print("Could not set timestamp on %s: %s" % (path, ex))
+
+
 def format_label(s, width=24):
     return s[:width].ljust(width)
 
@@ -125,8 +149,11 @@ for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_f
             image_path = album_path + "/" + \
                 re.sub(r'[^\w\-_\. ]', '_', image["FileName"])
 
-            # Skip if image has already been saved
+            timestamp = media_timestamp(image)
+
+            # Skip if image has already been saved, but correct its timestamp
             if os.path.isfile(image_path):
+                set_file_time(image_path, timestamp)
                 continue
 
             # Grab video URI if the file is video, otherwise, the standard image URI
@@ -147,6 +174,7 @@ for album in tqdm(albums["Response"]["AlbumList"], position=0, leave=True, bar_f
                 with open(image_path, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=128):
                         f.write(chunk)
+                set_file_time(image_path, timestamp)
             except requests.exceptions.RequestException as ex:
                 print("Could not fetch: " + str(ex))
             except UnicodeEncodeError as ex:
